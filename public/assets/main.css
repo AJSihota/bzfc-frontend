@@ -1,0 +1,274 @@
+/* BZFC Chain Brand Colors */
+:root {
+  --bzfc-primary: #e94560;
+  --bzfc-secondary: #0f3460;
+  --bzfc-dark: #1a1a2e;
+  --bzfc-light: #16213e;
+  --bzfc-accent: #00d9ff;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, var(--bzfc-dark) 0%, var(--bzfc-light) 100%);
+  min-height: 100vh;
+}
+
+/* Header Styling */
+.ui.menu.attached.top {
+  background: linear-gradient(90deg, var(--bzfc-dark) 0%, var(--bzfc-secondary) 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  margin-bottom: 2rem !important;
+}
+
+.ui.menu .item {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.ui.menu .item:hover {
+  color: var(--bzfc-accent) !important;
+}
+
+/* Logo styling */
+.bzfc-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 1em;
+}
+
+.bzfc-logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.bzfc-logo-text span {
+  color: var(--bzfc-primary);
+}
+
+/* Cards */
+.ui.card {
+  background: var(--bzfc-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+.ui.card .content {
+  background: transparent !important;
+}
+
+.ui.card .header {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.ui.card .meta {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.ui.card .description {
+  color: var(--bzfc-accent) !important;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+.ui.card .extra {
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Block Number Statistics */
+.ui.statistic.block_number > .value {
+  font-size: 2.4rem !important;
+  line-height: 4rem !important;
+  color: var(--bzfc-accent) !important;
+}
+
+.ui.statistic > .label {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Buttons */
+.ui.button {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
+
+.ui.primary.button {
+  background: var(--bzfc-primary) !important;
+}
+
+.ui.primary.button:hover {
+  background: #d63050 !important;
+}
+
+.ui.basic.button {
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Dropdown */
+.ui.selection.dropdown {
+  background: var(--bzfc-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+.ui.selection.dropdown .text {
+  color: #fff !important;
+}
+
+.ui.selection.dropdown .dropdown.icon {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.ui.selection.dropdown .menu {
+  background: var(--bzfc-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.ui.selection.dropdown .menu .item {
+  color: #fff !important;
+}
+
+.ui.selection.dropdown .menu .item:hover {
+  background: var(--bzfc-secondary) !important;
+}
+
+/* Labels */
+.ui.label {
+  background: var(--bzfc-secondary) !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+}
+
+/* Grid - add padding below header */
+.ui.grid {
+  padding: 1em;
+  margin-top: 1rem !important;
+}
+
+/* Container padding */
+.ui.container {
+  padding-top: 1rem !important;
+}
+
+/* Balance display */
+.ui.pointing.label {
+  background: var(--bzfc-secondary) !important;
+  color: #fff !important;
+}
+
+/* Input fields */
+.ui.input input {
+  background: var(--bzfc-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+.ui.input input:focus {
+  border-color: var(--bzfc-accent) !important;
+}
+
+.ui.input label {
+  color: rgba(255, 255, 255, 0.85) !important;
+  background: var(--bzfc-secondary) !important;
+}
+
+/* Segment */
+.ui.segment {
+  background: var(--bzfc-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+/* Messages */
+.ui.message {
+  background: var(--bzfc-light) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+}
+
+.ui.message .header {
+  color: #fff !important;
+}
+
+.ui.message p {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Transfer module styling */
+.transfer-module {
+  background: var(--bzfc-light);
+  border-radius: 12px;
+  padding: 1.5em;
+}
+
+/* Module headers */
+h1, h2, h3, h4, h5 {
+  color: #ffffff !important;
+}
+
+/* Form labels and text */
+.ui.form .field > label {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Connection status */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(0, 217, 255, 0.1);
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.connection-status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ff88;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Icons in cards */
+.ui.card .content .icon {
+  color: var(--bzfc-accent) !important;
+}
+
+/* Better text contrast overall */
+.ui.card .content,
+.ui.segment {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bzfc-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bzfc-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bzfc-primary);
+}
