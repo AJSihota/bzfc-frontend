@@ -46,6 +46,13 @@ const DEMO_STEPS = [
     color: '#00ff88',
   },
   {
+    key: 'transfer',
+    title: 'Transfer',
+    description: 'Share coupons',
+    icon: 'exchange',
+    color: '#ff6b6b',
+  },
+  {
     key: 'redeem',
     title: 'Redeem',
     description: 'Redeem coupons',
@@ -54,14 +61,42 @@ const DEMO_STEPS = [
   },
 ]
 
-// Helper to get test account addresses
-const TEST_ACCOUNTS = {
-  alice: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
-  bob: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694BH',
-  charlie: '5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y',
+const isTxSuccess = (status = '') => status.includes('Transaction successful!')
+const isTxFailure = (status = '') => status.includes('Transaction Failed')
+
+const getKeyringAccountAddress = (keyring, accountName) => {
+  if (!keyring?.getPairs) return ''
+
+  const target = accountName.toLowerCase()
+  const pair = keyring
+    .getPairs()
+    .find((account) => account.meta?.name?.toLowerCase().includes(target))
+
+  return pair?.address || ''
 }
 
-function VendorRegistration({ onNext, lastVendorId }) {
+function TxStatusMessage({ status, successHeader }) {
+  if (!status) return null
+
+  const success = isTxSuccess(status)
+  const failure = isTxFailure(status)
+
+  return (
+    <Message
+      positive={success}
+      negative={failure}
+      info={!success && !failure}
+      style={{ marginTop: '1rem' }}
+    >
+      <Message.Header>
+        {success ? successHeader : failure ? 'Error' : 'Processing...'}
+      </Message.Header>
+      <p>{status}</p>
+    </Message>
+  )
+}
+
+function VendorRegistration({ onNext, predictedVendorId }) {
   const [metadata, setMetadata] = useState('My Business')
   const [status, setStatus] = useState('')
 
@@ -80,6 +115,13 @@ function VendorRegistration({ onNext, lastVendorId }) {
         <p>
           <Icon name="lightbulb" /> Use <strong>Alice</strong> account for testing.
           Select it from the dropdown at the top of the page.
+        </p>
+      </Message>
+
+      <Message positive style={{ marginBottom: '1rem' }}>
+        <Message.Header>Expected Result</Message.Header>
+        <p>
+          If this succeeds, the new vendor will be created as <strong>Vendor ID {predictedVendorId}</strong>.
         </p>
       </Message>
 
@@ -105,21 +147,10 @@ function VendorRegistration({ onNext, lastVendorId }) {
           }}
         />
 
-        {status && (
-          <Message
-            positive={status.includes('Finalized') || status.includes('inBlock') || status.includes('Ready')}
-            negative={status.includes('Error') || status.includes('failed')}
-            style={{ marginTop: '1rem' }}
-          >
-            <Message.Header>
-              {status.includes('Finalized') || status.includes('Ready') ? 'Success!' : status.includes('Error') ? 'Error' : 'Processing...'}
-            </Message.Header>
-            <p>{status}</p>
-          </Message>
-        )}
+        <TxStatusMessage status={status} successHeader="Vendor Registered!" />
 
-        {status && (status.includes('Finalized') || status.includes('Ready')) && (
-          <Button primary fluid onClick={onNext} style={{ marginTop: '1rem' }}>
+        {isTxSuccess(status) && (
+          <Button primary fluid onClick={() => onNext(predictedVendorId)} style={{ marginTop: '1rem' }}>
             <Icon name="arrow right" /> Continue to Approval
           </Button>
         )}
@@ -131,6 +162,10 @@ function VendorRegistration({ onNext, lastVendorId }) {
 function VendorApproval({ onNext, suggestedVendorId }) {
   const [vendorId, setVendorId] = useState(suggestedVendorId)
   const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    setVendorId(suggestedVendorId)
+  }, [suggestedVendorId])
 
   return (
     <div>
@@ -167,7 +202,7 @@ function VendorApproval({ onNext, suggestedVendorId }) {
 
         <TxButton
           label="Approve Vendor"
-          type="SIGNED-TX"
+          type="SUDO-TX"
           setStatus={setStatus}
           attrs={{
             palletRpc: 'coupon',
@@ -177,20 +212,9 @@ function VendorApproval({ onNext, suggestedVendorId }) {
           }}
         />
 
-        {status && (
-          <Message
-            positive={status.includes('Finalized') || status.includes('inBlock') || status.includes('Ready')}
-            negative={status.includes('Error') || status.includes('failed')}
-            style={{ marginTop: '1rem' }}
-          >
-            <Message.Header>
-              {status.includes('Finalized') || status.includes('Ready') ? 'Vendor Approved!' : status.includes('Error') ? 'Error' : 'Processing...'}
-            </Message.Header>
-            <p>{status}</p>
-          </Message>
-        )}
+        <TxStatusMessage status={status} successHeader="Vendor Approved!" />
 
-        {status && (status.includes('Finalized') || status.includes('Ready')) && (
+        {isTxSuccess(status) && (
           <Button primary fluid onClick={onNext} style={{ marginTop: '1rem' }}>
             <Icon name="arrow right" /> Continue to Create Series
           </Button>
@@ -206,6 +230,10 @@ function SeriesCreation({ onNext, suggestedVendorId }) {
   const [expiry, setExpiry] = useState(1000000)
   const [maxSupply, setMaxSupply] = useState(1000)
   const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    setVendorId(suggestedVendorId)
+  }, [suggestedVendorId])
 
   return (
     <div>
@@ -279,20 +307,9 @@ function SeriesCreation({ onNext, suggestedVendorId }) {
           }}
         />
 
-        {status && (
-          <Message
-            positive={status.includes('Finalized') || status.includes('inBlock') || status.includes('Ready')}
-            negative={status.includes('Error') || status.includes('failed')}
-            style={{ marginTop: '1rem' }}
-          >
-            <Message.Header>
-              {status.includes('Finalized') || status.includes('Ready') ? 'Series Created!' : status.includes('Error') ? 'Error' : 'Processing...'}
-            </Message.Header>
-            <p>{status}</p>
-          </Message>
-        )}
+        <TxStatusMessage status={status} successHeader="Series Created!" />
 
-        {status && (status.includes('Finalized') || status.includes('Ready')) && (
+        {isTxSuccess(status) && (
           <Button primary fluid onClick={onNext} style={{ marginTop: '1rem' }}>
             <Icon name="arrow right" /> Continue to Issue Coupons
           </Button>
@@ -303,10 +320,18 @@ function SeriesCreation({ onNext, suggestedVendorId }) {
 }
 
 function IssueCoupons({ onNext }) {
+  const { keyring } = useSubstrateState()
+  const bobAddress = getKeyringAccountAddress(keyring, 'bob')
   const [seriesId, setSeriesId] = useState(0)
-  const [recipient, setRecipient] = useState(TEST_ACCOUNTS.bob)
+  const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState(10)
   const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    if (bobAddress) {
+      setRecipient((currentRecipient) => currentRecipient || bobAddress)
+    }
+  }, [bobAddress])
 
   return (
     <div>
@@ -365,20 +390,93 @@ function IssueCoupons({ onNext }) {
           }}
         />
 
-        {status && (
-          <Message
-            positive={status.includes('Finalized') || status.includes('inBlock') || status.includes('Ready')}
-            negative={status.includes('Error') || status.includes('failed')}
-            style={{ marginTop: '1rem' }}
-          >
-            <Message.Header>
-              {status.includes('Finalized') || status.includes('Ready') ? 'Coupons Issued!' : status.includes('Error') ? 'Error' : 'Processing...'}
-            </Message.Header>
-            <p>{status}</p>
-          </Message>
-        )}
+        <TxStatusMessage status={status} successHeader="Coupons Issued!" />
 
-        {status && (status.includes('Finalized') || status.includes('Ready')) && (
+        {isTxSuccess(status) && (
+          <Button primary fluid onClick={onNext} style={{ marginTop: '1rem' }}>
+            <Icon name="arrow right" /> Continue to Transfer
+          </Button>
+        )}
+      </Form>
+    </div>
+  )
+}
+
+function TransferCoupons({ onNext }) {
+  const { keyring } = useSubstrateState()
+  const charlieAddress = getKeyringAccountAddress(keyring, 'charlie')
+  const [seriesId, setSeriesId] = useState(0)
+  const [recipient, setRecipient] = useState('')
+  const [amount, setAmount] = useState(2)
+  const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    if (charlieAddress) {
+      setRecipient((current) => current || charlieAddress)
+    }
+  }, [charlieAddress])
+
+  return (
+    <div>
+      <Message info style={{ marginBottom: '1rem' }}>
+        <Message.Header>What's Happening</Message.Header>
+        <p>
+          You're <strong>transferring coupons</strong> from your wallet to another person.
+          This is the wallet-to-wallet sharing feature — each series has a toggle
+          that can enable or disable transfers.
+        </p>
+      </Message>
+
+      <Message positive style={{ marginBottom: '1rem' }}>
+        <Message.Header>Pre-Filled for Testing</Message.Header>
+        <p>
+          <Icon name="user" /> Recipient is set to <strong>Charlie's address</strong>.
+          Transfers are enabled by default on new series.
+        </p>
+      </Message>
+
+      <Form onSubmit={(e) => e.preventDefault()}>
+        <Form.Group widths="equal">
+          <Form.Field>
+            <label style={{ color: 'rgba(255,255,255,0.9)' }}>Series ID</label>
+            <Input
+              type="number"
+              value={seriesId}
+              onChange={(e) => setSeriesId(parseInt(e.target.value) || 0)}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label style={{ color: 'rgba(255,255,255,0.9)' }}>Recipient Address</label>
+            <Input
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label style={{ color: 'rgba(255,255,255,0.9)' }}>Amount</label>
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(parseInt(e.target.value) || 1)}
+            />
+          </Form.Field>
+        </Form.Group>
+
+        <TxButton
+          label="Transfer Coupons"
+          type="SIGNED-TX"
+          setStatus={setStatus}
+          attrs={{
+            palletRpc: 'coupon',
+            callable: 'transfer',
+            inputParams: [seriesId, recipient, amount],
+            paramFields: [true, true, true],
+          }}
+        />
+
+        <TxStatusMessage status={status} successHeader="Coupons Transferred!" />
+
+        {isTxSuccess(status) && (
           <Button primary fluid onClick={onNext} style={{ marginTop: '1rem' }}>
             <Icon name="arrow right" /> Continue to Redeem
           </Button>
@@ -443,20 +541,9 @@ function RedeemCoupons({ onComplete }) {
           }}
         />
 
-        {status && (
-          <Message
-            positive={status.includes('Finalized') || status.includes('inBlock') || status.includes('Ready')}
-            negative={status.includes('Error') || status.includes('failed')}
-            style={{ marginTop: '1rem' }}
-          >
-            <Message.Header>
-              {status.includes('Finalized') || status.includes('Ready') ? 'Coupons Redeemed!' : status.includes('Error') ? 'Error' : 'Processing...'}
-            </Message.Header>
-            <p>{status}</p>
-          </Message>
-        )}
+        <TxStatusMessage status={status} successHeader="Coupons Redeemed!" />
 
-        {status && (status.includes('Finalized') || status.includes('Ready')) && (
+        {isTxSuccess(status) && (
           <Button positive fluid size="large" onClick={onComplete} style={{ marginTop: '1rem' }}>
             <Icon name="trophy" /> Complete Demo!
           </Button>
@@ -503,35 +590,49 @@ function CouponBalance({ seriesId }) {
 
 export default function CouponDemo(props) {
   const { api, currentAccount } = useSubstrateState()
-  
-  // Track the vendor ID for auto-filling
-  const [lastVendorId, setLastVendorId] = useState(1)
-  
+
   // Check if coupon pallet is available
   const palletAvailable = api && api.tx && api.tx.coupon && api.query && api.query.coupon
-  
+
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState([])
+  const [nextVendorId, setNextVendorId] = useState(0)
+  const [activeVendorId, setActiveVendorId] = useState(0)
 
-  const handleStepComplete = (stepKey) => {
+  useEffect(() => {
+    if (!api?.query?.coupon?.nextVendorId) return
+
+    let unsubscribe
+    api.query.coupon
+      .nextVendorId((result) => {
+        setNextVendorId(Number(result.toString()))
+      })
+      .then((unsub) => {
+        unsubscribe = unsub
+      })
+      .catch(console.error)
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [api])
+
+  const handleStepComplete = (stepKey, value) => {
     setCompletedSteps([...completedSteps, stepKey])
     setCurrentStep(currentStep + 1)
-    // Increment vendor ID hint after registration
-    if (stepKey === 'register') {
-      setLastVendorId(prev => prev + 1)
+
+    if (stepKey === 'register' && typeof value === 'number') {
+      setActiveVendorId(value)
     }
   }
 
   const resetDemo = () => {
     setCurrentStep(0)
     setCompletedSteps([])
-    setLastVendorId(1)
+    setActiveVendorId(0)
   }
 
   const allCompleted = completedSteps.length === DEMO_STEPS.length
-
-  // Get the actual vendor ID to use (lastVendorId - 1 since we increment after registration)
-  const currentVendorId = Math.max(0, lastVendorId - 1)
 
   // Don't render if pallet not available
   if (!palletAvailable) {
@@ -565,7 +666,7 @@ export default function CouponDemo(props) {
                 BZFC Coupon Demo
               </Header>
               <p style={{ color: 'rgba(255,255,255,0.7)', marginTop: 0, fontSize: '0.95rem' }}>
-                Walk through the complete coupon lifecycle in 5 steps
+                Walk through the complete coupon lifecycle in 6 steps
               </p>
             </div>
             {completedSteps.length > 0 && (
@@ -579,7 +680,7 @@ export default function CouponDemo(props) {
 
       {/* Progress Indicator */}
       <Segment style={{ background: '#1a1a2e', padding: '1rem', marginBottom: '1rem' }}>
-        <Step.Group size="mini" widths={5} fluid>
+        <Step.Group size="mini" widths={6} fluid>
           {DEMO_STEPS.map((step, index) => (
             <Step
               key={step.key}
@@ -615,6 +716,7 @@ export default function CouponDemo(props) {
             <Label color="blue"><Icon name="check" /> Vendor Approved</Label>
             <Label color="teal"><Icon name="check" /> Series Created</Label>
             <Label color="olive"><Icon name="check" /> Coupons Issued</Label>
+            <Label color="pink"><Icon name="check" /> Coupons Transferred</Label>
             <Label color="orange"><Icon name="check" /> Coupons Redeemed</Label>
           </Label.Group>
         </Message>
@@ -625,26 +727,29 @@ export default function CouponDemo(props) {
         <Segment style={{ background: '#16213e', padding: '1.5rem' }}>
           {currentStep === 0 && (
             <VendorRegistration 
-              onNext={() => handleStepComplete('register')} 
-              lastVendorId={lastVendorId}
+              onNext={(vendorId) => handleStepComplete('register', vendorId)}
+              predictedVendorId={nextVendorId}
             />
           )}
           {currentStep === 1 && (
             <VendorApproval 
               onNext={() => handleStepComplete('approve')}
-              suggestedVendorId={currentVendorId}
+              suggestedVendorId={activeVendorId}
             />
           )}
           {currentStep === 2 && (
             <SeriesCreation 
               onNext={() => handleStepComplete('create')}
-              suggestedVendorId={currentVendorId}
+              suggestedVendorId={activeVendorId}
             />
           )}
           {currentStep === 3 && (
             <IssueCoupons onNext={() => handleStepComplete('issue')} />
           )}
           {currentStep === 4 && (
+            <TransferCoupons onNext={() => handleStepComplete('transfer')} />
+          )}
+          {currentStep === 5 && (
             <RedeemCoupons onComplete={() => handleStepComplete('redeem')} />
           )}
         </Segment>

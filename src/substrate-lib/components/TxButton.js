@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'semantic-ui-react'
 import { web3FromSource } from '@polkadot/extension-dapp'
@@ -20,7 +20,7 @@ function TxButton({
   // Hooks
   const { api, currentAccount } = useSubstrateState()
   const [unsub, setUnsub] = useState(null)
-  const [sudoKey, setSudoKey] = useState(null)
+  const terminalStatusRef = useRef(null)
 
   const { palletRpc, callable, inputParams, paramFields } = attrs
 
@@ -31,18 +31,6 @@ function TxButton({
   const isSigned = () => type === 'SIGNED-TX'
   const isRpc = () => type === 'RPC'
   const isConstant = () => type === 'CONSTANT'
-
-  const loadSudoKey = () => {
-    ;(async function () {
-      if (!api || !api.query.sudo) {
-        return
-      }
-      const sudoKey = await api.query.sudo.key()
-      sudoKey.isEmpty ? setSudoKey(null) : setSudoKey(sudoKey.toString())
-    })()
-  }
-
-  useEffect(loadSudoKey, [api])
 
   const getFromAcct = async () => {
     const {
@@ -60,47 +48,66 @@ function TxButton({
     return [address, { signer: injector.signer }]
   }
 
-  const txResHandler = ({ events = [], status, txHash }) =>{
-    status.isFinalized
-      ? setStatus(`😉 Finalized. Block hash: ${status.asFinalized.toString()}`)
-      : setStatus(`Current transaction status: ${status.type}`)
+  const txResHandler = ({ events = [], status, txHash, dispatchError }) =>{
+    const blockHash = status.isFinalized
+      ? status.asFinalized.toString()
+      : status.isInBlock
+        ? status.asInBlock.toString()
+        : ''
 
-      // Loop through Vec<EventRecord> to display all events
-      events.forEach(({ _, event: { data, method, section } }) => {
-        if ((section + ":" + method) === 'system:ExtrinsicFailed' ) {
-          // extract the data for this event
-          const [dispatchError, dispatchInfo] = data;
-          console.log(`dispatchinfo: ${dispatchInfo}`)
-          let errorInfo;
-          
-          // decode the error
-          if (dispatchError.isModule) {
-            // for module errors, we have the section indexed, lookup
-            // (For specific known errors, we can also do a check against the
-            // api.errors.<module>.<ErrorName>.is(dispatchError.asModule) guard)
-            const mod = dispatchError.asModule
-            const error = api.registry.findMetaError(
-                new Uint8Array([mod.index.toNumber(), bnFromHex(mod.error.toHex().slice(0, 4)).toNumber()])
-            )
-            let message = `${error.section}.${error.name}${
-                Array.isArray(error.docs) ? `(${error.docs.join('')})` : error.docs || ''
-            }`
-            
-            errorInfo = `${message}`;
-            console.log(`Error-info::${JSON.stringify(error)}`)
-          } else {
-            // Other, CannotLookup, BadOrigin, no extra info
-            errorInfo = dispatchError.toString();
-          }
-          setStatus(`😞 Transaction Failed! ${section}.${method}::${errorInfo}`)
-        } else if (section + ":" + method === 'system:ExtrinsicSuccess' ) {
-          setStatus(`❤️️ Transaction successful! tx hash: ${txHash} , Block hash: ${status.asFinalized.toString()}`)
-        }
-      });
+    if (dispatchError) {
+      const failedEvent = events.find(
+        ({ event: { method, section } }) => `${section}:${method}` === 'system:ExtrinsicFailed'
+      )
+      const dispatchInfo = failedEvent ? failedEvent.event.data[1] : null
+      console.log(`dispatchinfo: ${dispatchInfo}`)
+      let errorInfo
+
+      if (dispatchError.isModule) {
+        const mod = dispatchError.asModule
+        const error = api.registry.findMetaError(
+          new Uint8Array([mod.index.toNumber(), bnFromHex(mod.error.toHex().slice(0, 4)).toNumber()])
+        )
+        const message = `${error.section}.${error.name}${
+          Array.isArray(error.docs) ? `(${error.docs.join('')})` : error.docs || ''
+        }`
+
+        errorInfo = `${message}`
+        console.log(`Error-info::${JSON.stringify(error)}`)
+      } else {
+        errorInfo = dispatchError.toString()
+      }
+
+      terminalStatusRef.current = 'failed'
+      const errorLabel = failedEvent
+        ? `${failedEvent.event.section}.${failedEvent.event.method}`
+        : 'system.ExtrinsicFailed'
+
+      setStatus(`😞 Transaction Failed! ${errorLabel}::${errorInfo}`)
+      return
+    }
+
+    if (status.isInBlock || status.isFinalized) {
+      terminalStatusRef.current = 'success'
+      setStatus(`❤️️ Transaction successful! tx hash: ${txHash} , Block hash: ${blockHash}`)
+      return
+    }
+
+    if (terminalStatusRef.current) {
+      return
+    }
+
+    if (status.isFinalized) {
+      setStatus(`😉 Finalized. Block hash: ${blockHash}`)
+    } else {
+      setStatus(`Current transaction status: ${status.type}`)
+    }
   }
 
-  const txErrHandler = err =>
+  const txErrHandler = err => {
+    terminalStatusRef.current = 'failed'
     setStatus(`😞 Transaction Failed: ${err.toString()}`)
+  }
 
   const sudoTx = async () => {
     const fromAcct = await getFromAcct()
@@ -193,6 +200,7 @@ function TxButton({
       setUnsub(null)
     }
 
+    terminalStatusRef.current = null
     setStatus('Sending...')
 
     const asyncFunc =
@@ -288,13 +296,6 @@ function TxButton({
     })
   }
 
-  const isSudoer = acctPair => {
-    if (!sudoKey || !acctPair) {
-      return false
-    }
-    return acctPair.address === sudoKey
-  }
-
   return (
     <Button
       basic
@@ -308,8 +309,7 @@ function TxButton({
         !callable ||
         !allParamsFilled() ||
         // These txs required currentAccount to be set
-        ((isSudo() || isUncheckedSudo() || isSigned()) && !currentAccount) ||
-        ((isSudo() || isUncheckedSudo()) && !isSudoer(currentAccount))
+        ((isSudo() || isUncheckedSudo() || isSigned()) && !currentAccount)
       }
     >
       {label}
