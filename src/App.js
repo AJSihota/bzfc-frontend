@@ -16,6 +16,7 @@ import AccountSelector from './AccountSelector'
 import Balances from './Balances'
 import BlockNumber from './BlockNumber'
 import CouponDemo from './CouponDemo'
+import CustomerWallet from './CustomerWallet'
 import Events from './Events'
 import Interactor from './Interactor'
 import Metadata from './Metadata'
@@ -84,6 +85,9 @@ function Main() {
           </Grid.Row>
           <Grid.Row>
             <CouponDemo />
+          </Grid.Row>
+          <Grid.Row>
+            <CustomerWallet />
           </Grid.Row>
           <Grid.Row>
             <TemplateModule />

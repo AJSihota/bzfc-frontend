@@ -47,8 +47,8 @@ const DEMO_STEPS = [
   },
   {
     key: 'transfer',
-    title: 'Transfer',
-    description: 'Share coupons',
+    title: 'Opt-in & Transfer',
+    description: 'Vendor enables, then shares coupons',
     icon: 'exchange',
     color: '#ff6b6b',
   },
@@ -402,8 +402,7 @@ function IssueCoupons({ onNext }) {
   )
 }
 
-function TransferCoupons({ onNext }) {
-  const { keyring } = useSubstrateState()
+function TransferCoupons({ onNext }) {  const { keyring } = useSubstrateState()
   const charlieAddress = getKeyringAccountAddress(keyring, 'charlie')
   const [seriesId, setSeriesId] = useState(0)
   const [recipient, setRecipient] = useState('')
@@ -431,7 +430,8 @@ function TransferCoupons({ onNext }) {
         <Message.Header>Pre-Filled for Testing</Message.Header>
         <p>
           <Icon name="user" /> Recipient is set to <strong>Charlie's address</strong>.
-          Transfers are enabled by default on new series.
+          Series are <strong>non-transferable by default</strong> (MVP spec) — the
+          first button opts the series in, then the transfer goes through.
         </p>
       </Message>
 
@@ -463,7 +463,19 @@ function TransferCoupons({ onNext }) {
         </Form.Group>
 
         <TxButton
-          label="Transfer Coupons"
+          label="1. Enable Transfers (vendor opt-in)"
+          type="SIGNED-TX"
+          setStatus={setStatus}
+          attrs={{
+            palletRpc: 'coupon',
+            callable: 'setTransferEnabled',
+            inputParams: [seriesId, true],
+            paramFields: [true, true],
+          }}
+        />
+        <div style={{ height: '0.5rem' }} />
+        <TxButton
+          label="2. Transfer Coupons"
           type="SIGNED-TX"
           setStatus={setStatus}
           attrs={{
