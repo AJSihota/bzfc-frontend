@@ -16,6 +16,13 @@ const MAX_SERIES_TO_SCAN = 20
 // ponytail: O(n) scans capped — fine for demo scale.
 // Upgrade path: keysPaged enumeration for large series/wrap counts.
 
+const DECIMALS_17 = '00000000000000000'
+const toDisplay = baseUnits => {
+  const s = baseUnits?.toString() || '0'
+  if (s.length <= 17) return s.replace(/^0+(?=\d)/, '') === '' ? '0' : s
+  return s.slice(0, -17).replace(/^0+(?=\d)/, '') || '0'
+}
+
 export default function CustomerWallet() {
   const { api, currentAccount, keyring } = useSubstrateState()
   const [wraps, setWraps] = useState([])
@@ -197,7 +204,7 @@ export default function CustomerWallet() {
                     </div>
                   </div>
                   <Label circular color="yellow" size="large">
-                    {b ? b.toString() : '…'}
+                    {b ? (t.kind === 'wrap' ? toDisplay(b.toString()) : b.toString()) : '…'}
                   </Label>
                 </div>
               </Segment>
