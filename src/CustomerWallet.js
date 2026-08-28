@@ -22,16 +22,23 @@ export default function CustomerWallet() {
   const [redeemAmount, setRedeemAmount] = useState('1')
   const [activeSeries, setActiveSeries] = useState(null)
 
-  const accountName =
-    keyring?.getPair(currentAccount?.address)?.meta?.name?.toUpperCase() ||
-    'CUSTOMER'
+  const accountName = (() => {
+    const addr = currentAccount?.address
+    if (!addr || !keyring?.getPair) return 'CUSTOMER'
+    try {
+      return keyring.getPair(addr)?.meta?.name?.toUpperCase() || 'CUSTOMER'
+    } catch {
+      return 'CUSTOMER'
+    }
+  })()
 
   useEffect(() => {
     let unsubscribeAll = null
     let isMounted = true
 
     const load = async () => {
-      if (!api || !currentAccount) return
+      const addr = currentAccount?.address
+      if (!api || !addr) return
       const list = []
       for (let id = 0; id < MAX_SERIES_TO_SCAN; id += 1) {
         // eslint-disable-next-line no-await-in-loop
@@ -49,7 +56,7 @@ export default function CustomerWallet() {
       const bal = {}
       for (const s of list) {
         // eslint-disable-next-line no-await-in-loop
-        const b = await api.query.coupon.balances(currentAccount.address, s.id)
+        const b = await api.query.coupon.balances(addr, s.id)
         bal[s.id] = b
       }
       if (!isMounted) return
