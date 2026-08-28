@@ -16,7 +16,6 @@ const MAX_SERIES_TO_SCAN = 20
 // ponytail: O(n) scans capped — fine for demo scale.
 // Upgrade path: keysPaged enumeration for large series/wrap counts.
 
-const DECIMALS_17 = '00000000000000000'
 // decode like the vendor/admin apps do: toU8a(true) strips the compact length prefix.
 const decodeBytes = f => {
   try {
