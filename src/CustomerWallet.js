@@ -17,6 +17,17 @@ const MAX_SERIES_TO_SCAN = 20
 // Upgrade path: keysPaged enumeration for large series/wrap counts.
 
 const DECIMALS_17 = '00000000000000000'
+// decode like the vendor/admin apps do: toU8a(true) strips the compact length prefix.
+const decodeBytes = f => {
+  try {
+    if (!f) return ''
+    if (f.toUtf8) return f.toUtf8()
+    if (f.toU8a) return u8aToString(f.toU8a(true))
+  } catch {
+    /* fall through */
+  }
+  return ''
+}
 const toDisplay = baseUnits => {
   const s = baseUnits?.toString() || '0'
   if (s.length <= 17) return s.replace(/^0+(?=\d)/, '') === '' ? '0' : s
@@ -78,7 +89,7 @@ export default function CustomerWallet() {
             key: `wrap-${id}`,
             id,
             kind: 'wrap',
-            name: u8aToString(wv.name.toU8a()).replace(/\0.*$/g, ''),
+            name: decodeBytes(wv.name),
             status: JSON.stringify(wv.status).replace(/"/g, ''),
           })
         }
@@ -99,7 +110,7 @@ export default function CustomerWallet() {
             key: `coupon-${id}`,
             id,
             kind: 'coupon',
-            name: u8aToString(sv.metadata.toU8a()).replace(/\0.*$/g, ''),
+            name: decodeBytes(sv.metadata),
             expiry: sv.expiry.toString(),
           })
         }
