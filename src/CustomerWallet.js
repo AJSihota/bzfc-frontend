@@ -38,7 +38,9 @@ export default function CustomerWallet() {
 
     const load = async () => {
       const addr = currentAccount?.address
-      if (!api || !addr) return
+      // api.query.coupon appears only after metadata is injected post-'ready';
+      // early ticks are a no-op and the next block re-runs this.
+      if (!api || !addr || !api.query?.coupon?.series) return
       const list = []
       for (let id = 0; id < MAX_SERIES_TO_SCAN; id += 1) {
         // eslint-disable-next-line no-await-in-loop
@@ -77,7 +79,7 @@ export default function CustomerWallet() {
       isMounted = false
       if (unsubscribeAll) unsubscribeAll()
     }
-  }, [api, currentAccount])
+  }, [api, currentAccount, api?.query?.coupon])
 
   const active = seriesList.find(s => s.id === activeSeries)
   const activeBalance = active ? balances[active.id] : null
